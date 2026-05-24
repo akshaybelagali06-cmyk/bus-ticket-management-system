@@ -71,18 +71,6 @@ exports.create = async (req, res) => {
       [pass_type, student_id, route_id, issue_date, expiry_date, 'Active']
     );
 
-    // Also create initial renewal record
-    const [routeData] = await pool.query('SELECT fare FROM route WHERE route_id = ?', [route_id]);
-    if (routeData.length > 0) {
-      let amount = routeData[0].fare;
-      if (pass_type === 'Monthly') amount *= 30;
-      else if (pass_type === 'Semester') amount *= 180;
-      await pool.query(
-        'INSERT INTO renewal (pass_id, renewal_date, amount) VALUES (?, ?, ?)',
-        [result.insertId, issue_date, amount]
-      );
-    }
-
     const [newPass] = await pool.query(
       `SELECT bp.*, s.name as student_name, s.department,
               r.source, r.destination, r.fare
@@ -123,44 +111,6 @@ exports.update = async (req, res) => {
   }
 };
 
-exports.renew = async (req, res) => {
-  try {
-    const { expiry_date, amount } = req.body;
-    const passId = req.params.id;
-
-    const [existing] = await pool.query('SELECT * FROM buspass WHERE pass_id = ?', [passId]);
-    if (existing.length === 0) {
-      return res.status(404).json({ message: 'Bus pass not found' });
-    }
-
-    // Update pass
-    await pool.query(
-      'UPDATE buspass SET expiry_date = ?, status = ? WHERE pass_id = ?',
-      [expiry_date, 'Active', passId]
-    );
-
-    // Create renewal record
-    await pool.query(
-      'INSERT INTO renewal (pass_id, renewal_date, amount) VALUES (?, CURDATE(), ?)',
-      [passId, amount]
-    );
-
-    const [updated] = await pool.query(
-      `SELECT bp.*, s.name as student_name, s.department,
-              r.source, r.destination, r.fare
-       FROM buspass bp
-       JOIN student s ON bp.student_id = s.student_id
-       JOIN route r ON bp.route_id = r.route_id
-       WHERE bp.pass_id = ?`,
-      [passId]
-    );
-    res.json(updated[0]);
-  } catch (error) {
-    console.error('Renew pass error:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-};
-
 exports.remove = async (req, res) => {
   try {
     const [existing] = await pool.query('SELECT * FROM buspass WHERE pass_id = ?', [req.params.id]);
@@ -175,15 +125,3 @@ exports.remove = async (req, res) => {
   }
 };
 
-// Auto-detect expired passes
-exports.updateExpired = async (req, res) => {
-  try {
-    await pool.query(
-      "UPDATE buspass SET status = 'Expired' WHERE expiry_date < CURDATE() AND status = 'Active'"
-    );
-    res.json({ message: 'Expired passes updated' });
-  } catch (error) {
-    console.error('Update expired passes error:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-};

@@ -5,7 +5,7 @@ import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { Plus, RefreshCw, XCircle, Eye } from 'lucide-react';
+import { Plus, XCircle, Eye } from 'lucide-react';
 
 const statusColors = {
   Active: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
@@ -21,10 +21,8 @@ export default function PassesPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
-  const [renewModal, setRenewModal] = useState(null);
   const [viewPass, setViewPass] = useState(null);
   const { register, handleSubmit, reset } = useForm();
-  const { register: rReg, handleSubmit: rSubmit, reset: rReset } = useForm();
 
   const fetchPasses = () => {
     setLoading(true);
@@ -54,21 +52,10 @@ export default function PassesPage() {
   const handleCancel = async (id) => {
     if (!confirm('Cancel this pass?')) return;
     try {
-      await api.put(`/passes/${id}/status`, { status: 'Cancelled' });
+      await api.put(`/passes/${id}`, { status: 'Cancelled' });
       toast.success('Pass cancelled');
       fetchPasses();
     } catch { toast.error('Failed to cancel pass'); }
-  };
-
-  const handleRenew = async (data) => {
-    try {
-      await api.put(`/passes/${renewModal.pass_id}/renew`, {
-        expiry_date: data.new_expiry_date,
-        amount: data.amount,
-      });
-      toast.success('Pass renewed successfully');
-      setRenewModal(null); rReset(); fetchPasses();
-    } catch { toast.error('Renewal failed'); }
   };
 
   const inputClass = "w-full px-4 py-3 bg-[#0f172a] border border-[#334155] rounded-xl text-white text-sm placeholder-[#64748b] focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20 outline-none transition-all";
@@ -89,9 +76,6 @@ export default function PassesPage() {
       cell: (row) => (
         <div className="flex items-center gap-2">
           <button onClick={() => setViewPass(row)} className="p-2 rounded-lg text-cyan-400 hover:bg-cyan-500/10 transition-all"><Eye className="w-4 h-4" /></button>
-          {row.status !== 'Cancelled' && (
-            <button onClick={() => { setRenewModal(row); rReset(); }} className="p-2 rounded-lg text-amber-400 hover:bg-amber-500/10 transition-all" title="Renew"><RefreshCw className="w-4 h-4" /></button>
-          )}
           {row.status === 'Active' && (
             <button onClick={() => handleCancel(row.pass_id)} className="p-2 rounded-lg text-red-400 hover:bg-red-500/10 transition-all" title="Cancel"><XCircle className="w-4 h-4" /></button>
           )}
@@ -102,7 +86,7 @@ export default function PassesPage() {
 
   return (
     <div>
-      <PageHeader title="Bus Passes" subtitle="Issue, renew, and manage bus passes"
+      <PageHeader title="Bus Passes" subtitle="Issue and manage bus passes"
         action={<button onClick={() => { reset(); setModalOpen(true); }} className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-sm font-semibold rounded-xl hover:from-cyan-600 hover:to-blue-700 shadow-lg shadow-cyan-500/20 transition-all"><Plus className="w-4 h-4" /> Issue Pass</button>}
       />
       <DataTable
@@ -162,30 +146,6 @@ export default function PassesPage() {
         </form>
       </Modal>
 
-      {/* Renew Modal */}
-      <Modal isOpen={!!renewModal} onClose={() => { setRenewModal(null); rReset(); }} title="Renew Pass">
-        {renewModal && (
-          <form onSubmit={rSubmit(handleRenew)} className="space-y-4">
-            <div className="bg-[#0f172a] rounded-xl p-4 border border-[#334155]">
-              <p className="text-sm text-[#64748b]">Pass #{renewModal.pass_id} — {renewModal.student_name}</p>
-              <p className="text-sm text-white mt-1">{renewModal.source} → {renewModal.destination}</p>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[#94a3b8] mb-2">New Expiry Date</label>
-              <input type="date" {...rReg('new_expiry_date', { required: true })} className={inputClass} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[#94a3b8] mb-2">Amount (₹)</label>
-              <input type="number" step="0.01" {...rReg('amount', { required: true })} className={inputClass} placeholder="Enter renewal amount" />
-            </div>
-            <div className="flex gap-3 pt-4">
-              <button type="submit" className="flex-1 py-3 bg-gradient-to-r from-emerald-500 to-green-600 text-white font-semibold rounded-xl hover:from-emerald-600 hover:to-green-700 transition-all shadow-lg shadow-emerald-500/20">Renew Pass</button>
-              <button type="button" onClick={() => setRenewModal(null)} className="px-6 py-3 bg-[#0f172a] text-[#94a3b8] rounded-xl hover:text-white transition-all border border-[#334155]">Cancel</button>
-            </div>
-          </form>
-        )}
-      </Modal>
-
       {/* View Modal */}
       <Modal isOpen={!!viewPass} onClose={() => setViewPass(null)} title="Pass Details">
         {viewPass && (
@@ -212,3 +172,4 @@ export default function PassesPage() {
     </div>
   );
 }
+

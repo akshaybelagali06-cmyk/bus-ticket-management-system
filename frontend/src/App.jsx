@@ -8,8 +8,6 @@ import StudentsPage from "./pages/StudentsPage";
 import RoutesPage from "./pages/RoutesPage";
 import DriversPage from "./pages/DriversPage";
 import PassesPage from "./pages/PassesPage";
-import RenewalsPage from "./pages/RenewalsPage";
-import ReportsPage from "./pages/ReportsPage";
 import SettingsPage from "./pages/SettingsPage";
 
 function App() {
@@ -31,8 +29,6 @@ function App() {
             <Route path="routes" element={<RoutesPage />} />
             <Route path="drivers" element={<DriversPage />} />
             <Route path="passes" element={<PassesPage />} />
-            <Route path="renewals" element={<RenewalsPage />} />
-            <Route path="reports" element={<ReportsPage />} />
             <Route path="settings" element={<SettingsPage />} />
           </Route>
         </Routes>

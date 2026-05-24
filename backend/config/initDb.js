@@ -9,18 +9,16 @@ async function initializeDatabase() {
     password: process.env.DB_PASSWORD || '',
   });
 
-  // Create database
   await connection.query(`CREATE DATABASE IF NOT EXISTS ${process.env.DB_NAME || 'bus_pass_management'}`);
   await connection.query(`USE ${process.env.DB_NAME || 'bus_pass_management'}`);
 
-  // Drop old plural tables if they exist to avoid confusion
+  await connection.query(`DROP TABLE IF EXISTS renewal`);
   await connection.query(`DROP TABLE IF EXISTS renewals`);
   await connection.query(`DROP TABLE IF EXISTS bus_passes`);
   await connection.query(`DROP TABLE IF EXISTS routes`);
   await connection.query(`DROP TABLE IF EXISTS drivers`);
   await connection.query(`DROP TABLE IF EXISTS students`);
 
-  // Create admin_users table
   await connection.query(`
     CREATE TABLE IF NOT EXISTS admin_users (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -32,7 +30,6 @@ async function initializeDatabase() {
     )
   `);
 
-  // Create student table
   await connection.query(`
     CREATE TABLE IF NOT EXISTS student (
       student_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -43,7 +40,6 @@ async function initializeDatabase() {
     )
   `);
 
-  // Create driver table
   await connection.query(`
     CREATE TABLE IF NOT EXISTS driver (
       driver_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -53,7 +49,6 @@ async function initializeDatabase() {
     )
   `);
 
-  // Create route table
   await connection.query(`
     CREATE TABLE IF NOT EXISTS route (
       route_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -66,7 +61,6 @@ async function initializeDatabase() {
     )
   `);
 
-  // Create buspass table
   await connection.query(`
     CREATE TABLE IF NOT EXISTS buspass (
       pass_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -81,25 +75,13 @@ async function initializeDatabase() {
     )
   `);
 
-  // Create renewal table
-  await connection.query(`
-    CREATE TABLE IF NOT EXISTS renewal (
-      renewal_id INT AUTO_INCREMENT PRIMARY KEY,
-      pass_id INT,
-      renewal_date DATE,
-      amount DECIMAL(10,2),
-      FOREIGN KEY (pass_id) REFERENCES buspass(pass_id) ON DELETE CASCADE
-    )
-  `);
-
-  // Seed default admin user
   const hashedPassword = await bcrypt.hash('admin123', 10);
   await connection.query(`
     INSERT IGNORE INTO admin_users (username, password, full_name, email)
     VALUES ('admin', ?, 'System Administrator', 'admin@buspass.com')
   `, [hashedPassword]);
 
-  console.log('✅ Database initialized successfully with singular tables!');
+  console.log('✅ Database initialized successfully!');
   await connection.end();
 }
 
@@ -107,3 +89,4 @@ initializeDatabase().catch(err => {
   console.error('❌ Database initialization failed:', err.message);
   process.exit(1);
 });
+

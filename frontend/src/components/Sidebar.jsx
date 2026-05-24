@@ -2,7 +2,7 @@ import { NavLink } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, Users, MapPin, Truck, CreditCard,
-  RefreshCw, BarChart3, Settings, Bus, X, ChevronLeft
+  Settings, Bus, X
 } from 'lucide-react';
 
 const menuItems = [
@@ -11,8 +11,6 @@ const menuItems = [
   { path: '/routes', label: 'Routes', icon: MapPin },
   { path: '/drivers', label: 'Drivers', icon: Truck },
   { path: '/passes', label: 'Bus Passes', icon: CreditCard },
-  { path: '/renewals', label: 'Renewals', icon: RefreshCw },
-  { path: '/reports', label: 'Reports', icon: BarChart3 },
   { path: '/settings', label: 'Settings', icon: Settings },
 ];
 

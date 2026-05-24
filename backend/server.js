@@ -14,7 +14,6 @@ app.use('/api/students', require('./routes/studentRoutes'));
 app.use('/api/drivers', require('./routes/driverRoutes'));
 app.use('/api/routes', require('./routes/routeRoutes'));
 app.use('/api/passes', require('./routes/passRoutes'));
-app.use('/api/renewals', require('./routes/renewalRoutes'));
 app.use('/api/dashboard', require('./routes/dashboardRoutes'));
 
 // Health check
@@ -29,3 +28,4 @@ app.listen(PORT, () => {
 app.get("/", (req, res) => {
   res.send("Backend Running Successfully");
 });
+
