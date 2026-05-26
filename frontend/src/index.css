@@ -5,7 +5,7 @@
 body {
   margin: 0;
   padding: 0;
-  background: #0f172a;
-  color: white;
+  background-color: #f8fafc; /* Clean, modern light-gray background */
+  color: #0f172a;            /* Dark slate color for readable text */
   font-family: Inter, sans-serif;
 }

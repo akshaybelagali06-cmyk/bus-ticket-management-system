@@ -7,7 +7,8 @@ export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#0f172a]">
+    /* Changed bg-[#0f172a] to bg-slate-50 for a clean light background */
+    <div className="flex h-screen overflow-hidden bg-slate-50">
       <Sidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
       <div className="flex flex-col flex-1 overflow-hidden">
         <Navbar onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />

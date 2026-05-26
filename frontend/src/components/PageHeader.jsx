@@ -8,8 +8,8 @@ export default function PageHeader({ title, subtitle, action }) {
       className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8"
     >
       <div>
-        <h1 className="text-2xl font-bold text-white tracking-tight">{title}</h1>
-        {subtitle && <p className="text-sm text-[#64748b] mt-1">{subtitle}</p>}
+        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{title}</h1>
+        {subtitle && <p className="text-sm text-slate-500 mt-1">{subtitle}</p>}
       </div>
       {action && <div>{action}</div>}
     </motion.div>

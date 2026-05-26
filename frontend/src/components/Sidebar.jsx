@@ -24,7 +24,7 @@ export default function Sidebar({ isOpen, onToggle }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+            className="fixed inset-0 bg-slate-900/30 z-40 lg:hidden"
             onClick={onToggle}
           />
         )}
@@ -35,23 +35,23 @@ export default function Sidebar({ isOpen, onToggle }) {
         animate={{ width: isOpen ? 260 : 0 }}
         transition={{ duration: 0.3, ease: 'easeInOut' }}
         className={`
-          fixed lg:relative z-50 h-full bg-[#111827] border-r border-[#1e293b]
+          fixed lg:relative z-50 h-full bg-white border-r border-slate-200
           flex flex-col overflow-hidden
-          ${isOpen ? 'shadow-2xl lg:shadow-none' : ''}
+          ${isOpen ? 'shadow-xl lg:shadow-none' : ''}
         `}
       >
         {/* Logo */}
-        <div className="flex items-center justify-between p-5 border-b border-[#1e293b] min-w-[260px]">
+        <div className="flex items-center justify-between p-5 border-b border-slate-100 min-w-[260px]">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-md shadow-cyan-500/10">
               <Bus className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-white tracking-tight">BusPass</h1>
-              <p className="text-xs text-[#64748b] font-medium">Management Pro</p>
+              <h1 className="text-lg font-bold text-slate-800 tracking-tight">BusPass</h1>
+              <p className="text-xs text-slate-400 font-medium">Management Pro</p>
             </div>
           </div>
-          <button onClick={onToggle} className="lg:hidden text-[#64748b] hover:text-white transition-colors">
+          <button onClick={onToggle} className="lg:hidden text-slate-400 hover:text-slate-600 transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -66,8 +66,8 @@ export default function Sidebar({ isOpen, onToggle }) {
               className={({ isActive }) =>
                 `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group ${
                   isActive
-                    ? 'bg-gradient-to-r from-cyan-500/20 to-blue-500/10 text-cyan-400 shadow-lg shadow-cyan-500/5 border border-cyan-500/20'
-                    : 'text-[#94a3b8] hover:bg-[#1e293b] hover:text-white'
+                    ? 'bg-cyan-50 text-cyan-600 border border-cyan-100 shadow-sm'
+                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                 }`
               }
             >
@@ -78,10 +78,10 @@ export default function Sidebar({ isOpen, onToggle }) {
         </nav>
 
         {/* Footer */}
-        <div className="p-4 border-t border-[#1e293b] min-w-[260px]">
-          <div className="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 rounded-xl p-4 border border-cyan-500/10">
-            <p className="text-xs font-semibold text-cyan-400 mb-1">BusPass Pro v1.0</p>
-            <p className="text-xs text-[#64748b]">Admin Dashboard</p>
+        <div className="p-4 border-t border-slate-100 min-w-[260px]">
+          <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
+            <p className="text-xs font-semibold text-cyan-600 mb-1">BusPass Pro v1.0</p>
+            <p className="text-xs text-slate-400">Admin Dashboard</p>
           </div>
         </div>
       </motion.aside>
