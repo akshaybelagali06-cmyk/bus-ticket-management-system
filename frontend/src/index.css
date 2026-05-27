@@ -5,7 +5,33 @@
 body {
   margin: 0;
   padding: 0;
-  background-color: #f8fafc; /* Clean, modern light-gray background */
-  color: #0f172a;            /* Dark slate color for readable text */
+  background-color: #ffffff; /* Pure white background */
+  color: #1e293b;            /* Slightly softer dark for text */
   font-family: Inter, sans-serif;
+}
+
+/* Optional: Add these for even cleaner white UI */
+.card, .modal, .container {
+  background-color: #ffffff;
+}
+
+input, textarea, select {
+  background-color: #f8fafc; /* Very light gray for input fields */
+  border: 1px solid #e2e8f0;
+  color: #0f172a;
+}
+
+input:focus, textarea:focus {
+  border-color: #3b82f6;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+button {
+  background-color: #3b82f6; /* Clean blue button */
+  color: #ffffff;
+}
+
+button:hover {
+  background-color: #2563eb;
 }

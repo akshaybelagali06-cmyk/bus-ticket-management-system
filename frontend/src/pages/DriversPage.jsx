@@ -54,7 +54,8 @@ export default function DriversPage() {
     setModalOpen(true);
   };
 
-  const inputClass = "w-full px-4 py-3 bg-[#0f172a] border border-[#334155] rounded-xl text-white text-sm placeholder-[#64748b] focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20 outline-none transition-all";
+const inputClass =
+  "w-full px-4 py-3 bg-white border border-slate-300 rounded-xl text-black text-sm placeholder-black focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 outline-none transition-all";
 
   const columns = [
     { header: 'ID', accessor: 'driver_id' },

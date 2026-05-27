@@ -70,11 +70,11 @@ export default function StudentsPage() {
     setModalOpen(true);
   };
 
-  const inputClass = "w-full px-4 py-3 bg-[#0f172a] border border-[#334155] rounded-xl text-white text-sm placeholder-[#64748b] focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20 outline-none transition-all";
+  const inputClass = "w-full px-4 py-3 bg-white border border-slate-300 rounded-xl text-black placeholder-black outline-none focus:border-cyan-500 transition-all";
 
   const columns = [
     { header: 'ID', accessor: 'student_id' },
-    { header: 'Name', cell: (row) => <span className="font-medium text-white">{row.name}</span> },
+    { header: 'Name', cell: (row) => <span className="font-medium text-black">{row.name}</span> },
     { header: 'Department', accessor: 'department' },
     { header: 'Year', accessor: 'year' },
     { header: 'Phone', accessor: 'phone' },

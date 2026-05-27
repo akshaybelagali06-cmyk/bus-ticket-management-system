@@ -33,8 +33,8 @@ export default function DashboardPage() {
   return (
     <div>
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-        <h1 className="text-2xl font-bold text-white">Dashboard Overview</h1>
-        <p className="text-sm text-[#64748b] mt-1">Welcome back! Here's what's happening today.</p>
+        <h1 className="text-4xl font-bold text-black">Dashboard Overview</h1>
+        <p className="text-sm text-[#03080e] mt-1">Welcome back! Here's what's happening today.</p>
       </motion.div>
 
       {/* Stats Cards */}
@@ -48,7 +48,7 @@ export default function DashboardPage() {
       {/* Welcome Message */}
       <motion.div
         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-        className="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 rounded-2xl border border-cyan-500/20 p-8"
+        className="bg-gradient-to-r from-slate-800 to-slate-900 rounded-2xl border border-slate-700 p-8"
       >
         <h2 className="text-lg font-semibold text-white mb-2">Welcome to BusPass Management Pro</h2>
         <p className="text-[#94a3b8]">Manage your bus pass system efficiently with our comprehensive dashboard. View students, routes, drivers, and passes all in one place.</p>

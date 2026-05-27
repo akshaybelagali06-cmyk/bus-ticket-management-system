@@ -33,7 +33,7 @@ export default function Sidebar({ isOpen, onToggle }) {
       <motion.aside
         initial={false}
         animate={{ width: isOpen ? 260 : 0 }}
-        transition={{ duration: 0.3, ease: 'easeInOut' }}
+        transition={{ duration: 0.1, ease: [0.4, 0, 0.2, 1] }}
         className={`
           fixed lg:relative z-50 h-full bg-white border-r border-slate-200
           flex flex-col overflow-hidden
