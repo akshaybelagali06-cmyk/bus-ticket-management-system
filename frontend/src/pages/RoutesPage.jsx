@@ -17,12 +17,16 @@ export default function RoutesPage() {
   const { register, handleSubmit, reset, setValue } = useForm();
 
   const fetchRoutes = () => {
-    setLoading(true);
-    api.get('/routes', { params: { search } })
-      .then(res => setRoutes(res.data))
-      .catch(() => toast.error('Failed to load routes'))
-      .finally(() => setLoading(false));
-  };
+  setLoading(true);
+
+  api.get('/routes', { params: { search } })
+    .then(res => {
+      console.log("ROUTES DATA:", res.data);
+      setRoutes(res.data);
+    })
+    .catch(() => toast.error('Failed to load routes'))
+    .finally(() => setLoading(false));
+};
 
   const fetchDrivers = () => {
     api.get('/drivers').then(res => setDrivers(res.data)).catch(() => {});
@@ -69,9 +73,9 @@ export default function RoutesPage() {
     { header: 'ID', accessor: 'route_id' },
     { header: 'Route', cell: (row) => (
       <div>
-        <span className="font-medium text-white">{row.source}</span>
+        <span className="font-medium text-black">{row.source}</span>
         <span className="text-cyan-400 mx-2">→</span>
-        <span className="font-medium text-white">{row.destination}</span>
+        <span className="font-medium text-black">{row.destination}</span>
       </div>
     )},
     { header: 'Fare', cell: (row) => <span className="text-emerald-400 font-semibold">₹{row.fare}</span> },

@@ -62,9 +62,9 @@ export default function PassesPage() {
 
   const columns = [
     { header: 'Pass ID', accessor: 'pass_id' },
-    { header: 'Student', cell: (row) => <span className="font-medium text-white">{row.student_name}</span> },
+    { header: 'Student', cell: (row) => <span className="font-medium text-black">{row.student_name}</span> },
     { header: 'Type', cell: (row) => (
-      <span className="px-3 py-1 bg-purple-500/10 text-purple-400 rounded-lg text-xs font-semibold border border-purple-500/20">{row.pass_type}</span>
+      <span className="px-3 py-1 bg-purple-500/10 text-green-400 rounded-lg text-xs font-semibold border border-blue-500/20">{row.pass_type}</span>
     )},
     { header: 'Route', cell: (row) => <span className="text-sm">{row.source} → {row.destination}</span> },
     { header: 'Expiry', cell: (row) => new Date(row.expiry_date).toLocaleDateString() },

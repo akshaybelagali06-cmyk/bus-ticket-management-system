@@ -59,7 +59,7 @@ const inputClass =
 
   const columns = [
     { header: 'ID', accessor: 'driver_id' },
-    { header: 'Name', cell: (row) => <span className="font-medium text-white">{row.name}</span> },
+    { header: 'Name', cell: (row) => <span className="font-medium text-black">{row.name}</span> },
     { header: 'Phone', accessor: 'phone' },
     { header: 'Bus No', cell: (row) => (
       <span className="px-3 py-1 bg-cyan-500/10 text-cyan-400 rounded-lg text-xs font-semibold border border-cyan-500/20">{row.bus_no}</span>
