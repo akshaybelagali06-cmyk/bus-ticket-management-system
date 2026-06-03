@@ -20,7 +20,10 @@ import {
   Hash,
   Clock,
   CheckCircle,
-  XCircle
+  XCircle,
+  RefreshCw,
+  AlertCircle,
+  DollarSign
 } from 'lucide-react';
 
 export default function PassesPage() {
@@ -32,6 +35,8 @@ export default function PassesPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [viewPass, setViewPass] = useState(null);
+  const [renewModalOpen, setRenewModalOpen] = useState(false);
+  const [renewingPass, setRenewingPass] = useState(null);
   const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm();
 
   const debounceRef = useRef(null);
@@ -126,6 +131,31 @@ export default function PassesPage() {
     setModalOpen(true);
   }, [reset]);
 
+  const openRenewModal = useCallback((pass) => {
+    setRenewingPass(pass);
+    setValue('renew_valid_from', new Date().toISOString().split('T')[0]);
+    // Set default valid until to 1 year from now
+    const oneYearLater = new Date();
+    oneYearLater.setFullYear(oneYearLater.getFullYear() + 1);
+    setValue('renew_valid_until', oneYearLater.toISOString().split('T')[0]);
+    setRenewModalOpen(true);
+  }, [setValue]);
+
+  const handleRenew = async (data) => {
+    try {
+      await api.put(`/passes/${renewingPass.pass_id}/renew`, {
+        valid_from: data.renew_valid_from,
+        valid_until: data.renew_valid_until
+      });
+      toast.success('Bus pass renewed successfully!');
+      setRenewModalOpen(false);
+      setRenewingPass(null);
+      fetchPasses();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Renewal failed');
+    }
+  };
+
   const inputClass = "w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-700 placeholder-gray-400 outline-none focus:border-gray-400 focus:ring-2 focus:ring-gray-200 transition-all duration-200";
   const selectClass = "w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-700 outline-none focus:border-gray-400 focus:ring-2 focus:ring-gray-200 transition-all duration-200";
 
@@ -176,6 +206,15 @@ export default function PassesPage() {
       )
     },
     { 
+      header: 'Fare', 
+      cell: (row) => (
+        <div className="flex items-center gap-2">
+          <DollarSign className="w-4 h-4 text-green-600" />
+          <span className="font-bold text-green-600">₹{row.fare}</span>
+        </div>
+      )
+    },
+    { 
       header: 'Valid From', 
       cell: (row) => (
         <div className="flex items-center gap-2">
@@ -198,6 +237,7 @@ export default function PassesPage() {
       cell: (row) => {
         const today = new Date();
         const validUntil = new Date(row.valid_until);
+        const daysLeft = Math.ceil((validUntil - today) / (1000 * 60 * 60 * 24));
         const isValid = validUntil >= today;
         return (
           <div className="flex items-center gap-2">
@@ -207,7 +247,7 @@ export default function PassesPage() {
               <XCircle className="w-4 h-4 text-red-500" />
             )}
             <span className={`px-3 py-1 rounded-lg text-xs font-semibold ${isValid ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
-              {isValid ? 'Active' : 'Expired'}
+              {isValid ? (daysLeft <= 30 ? `Expires in ${daysLeft} days` : 'Active') : 'Expired'}
             </span>
           </div>
         );
@@ -215,39 +255,66 @@ export default function PassesPage() {
     },
     {
       header: 'Actions',
-      cell: (row) => (
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setViewPass(row)}
-            className="p-2.5 rounded-xl bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all duration-200 group"
-            title="View Details"
-          >
-            <Eye className="w-4 h-4 group-hover:scale-110 transition-transform" />
-          </button>
-          <button
-            onClick={() => openEdit(row)}
-            className="p-2.5 rounded-xl bg-amber-50 text-amber-600 hover:bg-amber-100 transition-all duration-200 group"
-            title="Edit Pass"
-          >
-            <Edit2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
-          </button>
-          <button
-            onClick={() => handleDelete(row.pass_id)}
-            className="p-2.5 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 transition-all duration-200 group"
-            title="Delete Pass"
-          >
-            <Trash2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
-          </button>
-        </div>
-      ),
+      cell: (row) => {
+        const isValid = new Date(row.valid_until) >= new Date();
+        return (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setViewPass(row)}
+              className="p-2.5 rounded-xl bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all duration-200 group"
+              title="View Details"
+            >
+              <Eye className="w-4 h-4 group-hover:scale-110 transition-transform" />
+            </button>
+            <button
+              onClick={() => openEdit(row)}
+              className="p-2.5 rounded-xl bg-amber-50 text-amber-600 hover:bg-amber-100 transition-all duration-200 group"
+              title="Edit Pass"
+            >
+              <Edit2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
+            </button>
+            {!isValid && (
+              <button
+                onClick={() => openRenewModal(row)}
+                className="p-2.5 rounded-xl bg-purple-50 text-purple-600 hover:bg-purple-100 transition-all duration-200 group"
+                title="Renew Pass"
+              >
+                <RefreshCw className="w-4 h-4 group-hover:scale-110 transition-transform" />
+              </button>
+            )}
+            <button
+              onClick={() => handleDelete(row.pass_id)}
+              className="p-2.5 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 transition-all duration-200 group"
+              title="Delete Pass"
+            >
+              <Trash2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
+            </button>
+          </div>
+        );
+      },
     },
-  ], [openEdit, handleDelete]);
+  ], [openEdit, handleDelete, openRenewModal]);
 
   // Calculate statistics
   const totalPasses = passes.length;
   const activePasses = passes.filter(p => new Date(p.valid_until) >= new Date()).length;
   const expiredPasses = totalPasses - activePasses;
-  const renewalRate = totalPasses > 0 ? ((activePasses / totalPasses) * 100).toFixed(1) : 0;
+  // Calculate total revenue from all passes (fare of each pass)
+  const totalRevenue = passes.reduce((sum, pass) => sum + (parseFloat(pass.fare) || 0), 0);
+  const expiringSoon = passes.filter(p => {
+    const today = new Date();
+    const validUntil = new Date(p.valid_until);
+    const daysLeft = Math.ceil((validUntil - today) / (1000 * 60 * 60 * 24));
+    return daysLeft <= 30 && daysLeft > 0;
+  }).length;
+
+  // Format revenue in Indian currency format
+  const formattedRevenue = new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  }).format(totalRevenue);
 
   return (
     <div className="space-y-6">
@@ -274,8 +341,8 @@ export default function PassesPage() {
         </div>
       </div>
       
-      {/* Premium Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
+      {/* Premium Stats Cards - 5 cards including Total Revenue */}
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-5">
         <div className="group relative overflow-hidden bg-white rounded-2xl p-5 shadow-md border border-gray-100 hover:shadow-xl transition-all duration-300">
           <div className="absolute top-0 right-0 w-20 h-20 bg-gray-50 rounded-full blur-2xl group-hover:scale-150 transition-transform"></div>
           <div className="relative flex items-center justify-between">
@@ -321,15 +388,30 @@ export default function PassesPage() {
           </div>
         </div>
 
-        <div className="group relative overflow-hidden bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-5 shadow-md hover:shadow-xl transition-all duration-300">
+        <div className="group relative overflow-hidden bg-white rounded-2xl p-5 shadow-md border border-gray-100 hover:shadow-xl transition-all duration-300">
+          <div className="absolute top-0 right-0 w-20 h-20 bg-gray-50 rounded-full blur-2xl group-hover:scale-150 transition-transform"></div>
+          <div className="relative flex items-center justify-between">
+            <div>
+              <p className="text-gray-400 text-sm font-medium mb-1">Expiring Soon</p>
+              <p className="text-3xl font-black text-orange-600">{expiringSoon}</p>
+              <p className="text-xs text-gray-400 mt-2">Within 30 days</p>
+            </div>
+            <div className="w-14 h-14 rounded-2xl bg-orange-50 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <AlertCircle className="w-7 h-7 text-orange-600" />
+            </div>
+          </div>
+        </div>
+
+        {/* Total Revenue Card - Replaced Renewal Rate */}
+        <div className="group relative overflow-hidden bg-gradient-to-br from-emerald-600 to-teal-700 rounded-2xl p-5 shadow-md hover:shadow-xl transition-all duration-300">
           <div className="relative">
             <div className="flex items-center justify-between mb-3">
-              <Award className="w-8 h-8 text-yellow-400" />
-              <Sparkles className="w-4 h-4 text-gray-400" />
+              <DollarSign className="w-8 h-8 text-yellow-300" />
+              <Award className="w-4 h-4 text-white/60" />
             </div>
-            <p className="text-gray-300 text-xs font-medium mb-1">Renewal Rate</p>
-            <p className="text-2xl font-bold text-white">{renewalRate}%</p>
-            <p className="text-xs text-gray-400 mt-2">Active vs Total</p>
+            <p className="text-emerald-100 text-xs font-medium mb-1">Total Revenue</p>
+            <p className="text-2xl font-bold text-white">{formattedRevenue}</p>
+            <p className="text-xs text-emerald-200 mt-2">From all passes</p>
           </div>
         </div>
       </div>
@@ -429,6 +511,57 @@ export default function PassesPage() {
         </form>
       </Modal>
 
+      {/* Renew Modal */}
+      <Modal
+        isOpen={renewModalOpen}
+        onClose={() => { setRenewModalOpen(false); setRenewingPass(null); reset(); }}
+        title={
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
+              <RefreshCw className="w-5 h-5 text-purple-600" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-800">Renew Bus Pass</h2>
+              <p className="text-xs text-gray-400 mt-0.5">Extend the validity of this pass</p>
+            </div>
+          </div>
+        }
+      >
+        <form onSubmit={handleSubmit(handleRenew)} className="space-y-5">
+          {renewingPass && (
+            <div className="bg-gray-50 rounded-xl p-4 mb-2">
+              <p className="text-sm text-gray-600">Renewing pass for:</p>
+              <p className="font-bold text-gray-800">{renewingPass.student_name}</p>
+              <p className="text-xs text-gray-500 mt-1">Route: {renewingPass.source} → {renewingPass.destination}</p>
+              <p className="text-xs text-gray-500 mt-1">Fare: ₹{renewingPass.fare}</p>
+            </div>
+          )}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">New Valid From</label>
+            <input type="date" {...register('renew_valid_from', { required: true })} className={inputClass} />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">New Valid Until</label>
+            <input type="date" {...register('renew_valid_until', { required: true })} className={inputClass} />
+          </div>
+          <div className="flex gap-3 pt-4">
+            <button
+              type="submit"
+              className="flex-1 py-3 bg-purple-600 text-white font-bold rounded-xl hover:bg-purple-700 transition-all duration-200 shadow-md"
+            >
+              Renew Pass
+            </button>
+            <button
+              type="button"
+              onClick={() => { setRenewModalOpen(false); setRenewingPass(null); reset(); }}
+              className="px-6 py-3 bg-gray-100 text-gray-600 font-semibold rounded-xl hover:bg-gray-200 transition-all duration-200"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      </Modal>
+
       {/* View Modal */}
       <Modal isOpen={!!viewPass} onClose={() => setViewPass(null)} title="Bus Pass Details">
         {viewPass && (
@@ -458,6 +591,19 @@ export default function PassesPage() {
                 <span className="text-sm font-semibold text-gray-800">{value}</span>
               </div>
             ))}
+
+            {/* Renew Button in View Modal */}
+            {new Date(viewPass.valid_until) < new Date() && (
+              <button
+                onClick={() => {
+                  setViewPass(null);
+                  openRenewModal(viewPass);
+                }}
+                className="w-full mt-4 py-3 bg-purple-600 text-white font-bold rounded-xl hover:bg-purple-700 transition-all duration-200 flex items-center justify-center gap-2"
+              >
+                <RefreshCw className="w-4 h-4" /> Renew This Pass
+              </button>
+            )}
           </div>
         )}
       </Modal>
