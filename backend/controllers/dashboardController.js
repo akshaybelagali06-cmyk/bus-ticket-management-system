@@ -1,20 +1,23 @@
-const pool = require('../config/db');
+const db = require('../config/db');
 
 exports.getDashboardStats = async (req, res) => {
   try {
-    const [students] = await pool.query('SELECT COUNT(*) as count FROM student');
-    const [routes] = await pool.query('SELECT COUNT(*) as count FROM route');
-    const [drivers] = await pool.query('SELECT COUNT(*) as count FROM driver');
-    const [activePasses] = await pool.query("SELECT COUNT(*) as count FROM buspass WHERE status = 'Active'");
-    const [expiredPasses] = await pool.query("SELECT COUNT(*) as count FROM buspass WHERE status = 'Expired'");
-
+    const [students, drivers, routes, passes, activePasses, expiredPasses] = await Promise.all([
+      db.collection('students').count().get(),
+      db.collection('drivers').count().get(),
+      db.collection('routes').count().get(),
+      db.collection('passes').count().get(),
+      db.collection('passes').where('status', '==', 'Active').count().get(),
+      db.collection('passes').where('status', '==', 'Expired').count().get(),
+    ]);
     res.json({
       stats: {
-        totalStudents: students[0].count,
-        totalRoutes: routes[0].count,
-        totalDrivers: drivers[0].count,
-        activePasses: activePasses[0].count,
-        expiredPasses: expiredPasses[0].count,
+        totalStudents: students.data().count,
+        totalRoutes: routes.data().count,
+        totalDrivers: drivers.data().count,
+        totalPasses: passes.data().count,
+        activePasses: activePasses.data().count,
+        expiredPasses: expiredPasses.data().count,
       },
     });
   } catch (error) {
@@ -22,4 +25,3 @@ exports.getDashboardStats = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
-

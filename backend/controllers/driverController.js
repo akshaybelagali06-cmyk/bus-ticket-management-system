@@ -1,18 +1,19 @@
-const pool = require('../config/db');
+const db = require('../config/db');
+
+const collection = db.collection('drivers');
+const toDriver = (doc) => ({ ...doc.data(), id: doc.id, driver_id: doc.id });
 
 exports.getAll = async (req, res) => {
   try {
-    const { search } = req.query;
-    let query = 'SELECT * FROM driver';
-    const params = [];
-
-    if (search) {
-      query += ' WHERE name LIKE ? OR phone LIKE ? OR bus_no LIKE ?';
-      params.push(`%${search}%`, `%${search}%`, `%${search}%`);
+    const snapshot = await collection.get();
+    let drivers = snapshot.docs.map(toDriver);
+    if (req.query.search) {
+      const value = req.query.search.toLowerCase();
+      drivers = drivers.filter((driver) =>
+        ['name', 'phone', 'bus_no'].some((field) => String(driver[field] || '').toLowerCase().includes(value))
+      );
     }
-
-    const [rows] = await pool.query(query, params);
-    res.json(rows);
+    res.json(drivers);
   } catch (error) {
     console.error('Get drivers error:', error);
     res.status(500).json({ message: 'Server error' });
@@ -21,11 +22,9 @@ exports.getAll = async (req, res) => {
 
 exports.getById = async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT * FROM driver WHERE driver_id = ?', [req.params.id]);
-    if (rows.length === 0) {
-      return res.status(404).json({ message: 'Driver not found' });
-    }
-    res.json(rows[0]);
+    const doc = await collection.doc(req.params.id).get();
+    if (!doc.exists) return res.status(404).json({ message: 'Driver not found' });
+    res.json(toDriver(doc));
   } catch (error) {
     console.error('Get driver error:', error);
     res.status(500).json({ message: 'Server error' });
@@ -35,15 +34,9 @@ exports.getById = async (req, res) => {
 exports.create = async (req, res) => {
   try {
     const { name, phone, bus_no } = req.body;
-    if (!name || !phone || !bus_no) {
-      return res.status(400).json({ message: 'All fields are required' });
-    }
-    const [result] = await pool.query(
-      'INSERT INTO driver (name, phone, bus_no) VALUES (?, ?, ?)',
-      [name, phone, bus_no]
-    );
-    const [newDriver] = await pool.query('SELECT * FROM driver WHERE driver_id = ?', [result.insertId]);
-    res.status(201).json(newDriver[0]);
+    if (!name || !phone || !bus_no) return res.status(400).json({ message: 'All fields are required' });
+    const ref = await collection.add(req.body);
+    res.status(201).json(toDriver(await ref.get()));
   } catch (error) {
     console.error('Create driver error:', error);
     res.status(500).json({ message: 'Server error' });
@@ -52,17 +45,10 @@ exports.create = async (req, res) => {
 
 exports.update = async (req, res) => {
   try {
-    const { name, phone, bus_no } = req.body;
-    const [existing] = await pool.query('SELECT * FROM driver WHERE driver_id = ?', [req.params.id]);
-    if (existing.length === 0) {
-      return res.status(404).json({ message: 'Driver not found' });
-    }
-    await pool.query(
-      'UPDATE driver SET name = ?, phone = ?, bus_no = ? WHERE driver_id = ?',
-      [name, phone, bus_no, req.params.id]
-    );
-    const [updated] = await pool.query('SELECT * FROM driver WHERE driver_id = ?', [req.params.id]);
-    res.json(updated[0]);
+    const ref = collection.doc(req.params.id);
+    if (!(await ref.get()).exists) return res.status(404).json({ message: 'Driver not found' });
+    await ref.update(req.body);
+    res.json(toDriver(await ref.get()));
   } catch (error) {
     console.error('Update driver error:', error);
     res.status(500).json({ message: 'Server error' });
@@ -71,11 +57,9 @@ exports.update = async (req, res) => {
 
 exports.remove = async (req, res) => {
   try {
-    const [existing] = await pool.query('SELECT * FROM driver WHERE driver_id = ?', [req.params.id]);
-    if (existing.length === 0) {
-      return res.status(404).json({ message: 'Driver not found' });
-    }
-    await pool.query('DELETE FROM driver WHERE driver_id = ?', [req.params.id]);
+    const ref = collection.doc(req.params.id);
+    if (!(await ref.get()).exists) return res.status(404).json({ message: 'Driver not found' });
+    await ref.delete();
     res.json({ message: 'Driver deleted successfully' });
   } catch (error) {
     console.error('Delete driver error:', error);
