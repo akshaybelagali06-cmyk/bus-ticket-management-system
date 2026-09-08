@@ -16,7 +16,7 @@ The Bus Pass Management System is a web application designed to manage student b
 * Manage Bus Routes
 * Issue Bus Passes
 * View Bus Pass Information
-* Store Data Using MySQL Database
+* Store Data Using Firebase Firestore
 
 ---
 
@@ -36,7 +36,7 @@ The Bus Pass Management System is a web application designed to manage student b
 
 ### Database
 
-* MySQL
+* Firebase Firestore
 
 ### Version Control
 
@@ -45,9 +45,9 @@ The Bus Pass Management System is a web application designed to manage student b
 
 ---
 
-## Database Structure
+## Firestore Collections
 
-### Student
+### students
 
 * student_id
 * name
@@ -55,14 +55,14 @@ The Bus Pass Management System is a web application designed to manage student b
 * year
 * phone
 
-### Driver
+### drivers
 
 * driver_id
 * name
 * phone
 * bus_no
 
-### Route
+### routes
 
 * route_id
 * driver_id
@@ -71,7 +71,7 @@ The Bus Pass Management System is a web application designed to manage student b
 * bus_no
 * fare
 
-### BusPass
+### passes
 
 * pass_id
 * pass_type
@@ -129,20 +129,11 @@ npm run dev
 
 ---
 
-## Database Setup
+## Firebase Setup
 
-1. Open MySQL Workbench.
-2. Create a database named:
-
-bus_pass_management
-
-3. Execute the commands in:
-
-database/schema.sql
-
-4. Insert sample data using:
-
-database/sample_data.sql
+Configure `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, and
+`FIREBASE_PRIVATE_KEY` in the backend environment before starting the server.
+Run `npm run create-admin` from `backend` to seed the initial administrator.
 
 ---
 
@@ -150,4 +141,4 @@ database/sample_data.sql
 
 ## Academic Project
 
-This project was developed for learning Full Stack Web Development concepts using React, Node.js, Express.js, and MySQL.
+This project was developed for learning Full Stack Web Development concepts using React, Node.js, Express.js, and Firebase.

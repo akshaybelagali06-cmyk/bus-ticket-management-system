@@ -1,226 +1,83 @@
-const pool = require('../config/db');
+const db = require('../config/db');
+
+const collection = db.collection('students');
+
+const toStudent = (doc) => ({
+  ...doc.data(),
+  id: doc.id,
+  student_id: doc.id,
+});
 
 exports.getAll = async (req, res) => {
   try {
-
     const { search, department, year } = req.query;
-
-    let query = 'SELECT * FROM student';
-
-    const params = [];
-    const conditions = [];
+    const snapshot = await collection.get();
+    let students = snapshot.docs.map(toStudent);
 
     if (search) {
-      conditions.push('(name LIKE ? OR phone LIKE ?)');
-      params.push(`%${search}%`, `%${search}%`);
+      const value = search.toLowerCase();
+      students = students.filter((student) =>
+        String(student.name || '').toLowerCase().includes(value) ||
+        String(student.phone || '').toLowerCase().includes(value)
+      );
     }
+    if (department) students = students.filter((student) => String(student.department) === String(department));
+    if (year) students = students.filter((student) => String(student.year) === String(year));
 
-    if (department) {
-      conditions.push('department = ?');
-      params.push(department);
-    }
-
-    if (year) {
-      conditions.push('year = ?');
-      params.push(year);
-    }
-
-    if (conditions.length > 0) {
-      query += ' WHERE ' + conditions.join(' AND ');
-    }
-
-    const [rows] = await pool.query(query, params);
-
-    res.json(rows);
-
+    res.json(students);
   } catch (error) {
-
     console.error('Get students error:', error);
-
-    res.status(500).json({
-      message: 'Server error'
-    });
-
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
 exports.getById = async (req, res) => {
-
   try {
-
-    const [rows] = await pool.query(
-
-      'SELECT * FROM student WHERE student_id = ?',
-
-      [req.params.id]
-
-    );
-
-    if (rows.length === 0) {
-
-      return res.status(404).json({
-        message: 'Student not found'
-      });
-
-    }
-
-    res.json(rows[0]);
-
+    const doc = await collection.doc(req.params.id).get();
+    if (!doc.exists) return res.status(404).json({ message: 'Student not found' });
+    res.json(toStudent(doc));
   } catch (error) {
-
-    console.error(error);
-
-    res.status(500).json({
-      message: 'Server error'
-    });
-
+    console.error('Get student error:', error);
+    res.status(500).json({ message: 'Server error' });
   }
-
 };
 
 exports.create = async (req, res) => {
-
   try {
-
     const { name, department, year, phone } = req.body;
-
     if (!name || !department || !year || !phone) {
-
-      return res.status(400).json({
-        message: 'All fields are required'
-      });
-
+      return res.status(400).json({ message: 'All fields are required' });
     }
-
-    const [result] = await pool.query(
-
-      `INSERT INTO student
-      (name, department, year, phone)
-      VALUES (?, ?, ?, ?)`,
-
-      [name, department, year, phone]
-
-    );
-
-    const [newStudent] = await pool.query(
-
-      'SELECT * FROM student WHERE student_id = ?',
-
-      [result.insertId]
-
-    );
-
-    res.status(201).json(newStudent[0]);
-
+    const ref = await collection.add(req.body);
+    const doc = await ref.get();
+    res.status(201).json(toStudent(doc));
   } catch (error) {
-
     console.error('Create student error:', error);
-
-    res.status(500).json({
-      message: 'Server error'
-    });
-
+    res.status(500).json({ message: 'Server error' });
   }
-
 };
 
 exports.update = async (req, res) => {
-
   try {
-
-    const { name, department, year, phone } = req.body;
-
-    const [existing] = await pool.query(
-
-      'SELECT * FROM student WHERE student_id = ?',
-
-      [req.params.id]
-
-    );
-
-    if (existing.length === 0) {
-
-      return res.status(404).json({
-        message: 'Student not found'
-      });
-
-    }
-
-    await pool.query(
-
-      `UPDATE student
-       SET name = ?,
-           department = ?,
-           year = ?,
-           phone = ?
-       WHERE student_id = ?`,
-
-      [name, department, year, phone, req.params.id]
-
-    );
-
-    const [updated] = await pool.query(
-
-      'SELECT * FROM student WHERE student_id = ?',
-
-      [req.params.id]
-
-    );
-
-    res.json(updated[0]);
-
+    const ref = collection.doc(req.params.id);
+    const existing = await ref.get();
+    if (!existing.exists) return res.status(404).json({ message: 'Student not found' });
+    await ref.update(req.body);
+    res.json(toStudent(await ref.get()));
   } catch (error) {
-
-    console.error(error);
-
-    res.status(500).json({
-      message: 'Server error'
-    });
-
+    console.error('Update student error:', error);
+    res.status(500).json({ message: 'Server error' });
   }
-
 };
 
 exports.remove = async (req, res) => {
-
   try {
-
-    const [existing] = await pool.query(
-
-      'SELECT * FROM student WHERE student_id = ?',
-
-      [req.params.id]
-
-    );
-
-    if (existing.length === 0) {
-
-      return res.status(404).json({
-        message: 'Student not found'
-      });
-
-    }
-
-    await pool.query(
-
-      'DELETE FROM student WHERE student_id = ?',
-
-      [req.params.id]
-
-    );
-
-    res.json({
-      message: 'Student deleted successfully'
-    });
-
+    const ref = collection.doc(req.params.id);
+    if (!(await ref.get()).exists) return res.status(404).json({ message: 'Student not found' });
+    await ref.delete();
+    res.json({ message: 'Student deleted successfully' });
   } catch (error) {
-
-    console.error(error);
-
-    res.status(500).json({
-      message: 'Server error'
-    });
-
+    console.error('Delete student error:', error);
+    res.status(500).json({ message: 'Server error' });
   }
-
 };

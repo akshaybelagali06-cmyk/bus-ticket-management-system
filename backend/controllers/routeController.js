@@ -1,22 +1,34 @@
-const pool = require('../config/db');
+const db = require('../config/db');
+
+const routes = db.collection('routes');
+const drivers = db.collection('drivers');
+
+const toRoute = async (doc) => {
+  const route = { ...doc.data(), id: doc.id, route_id: doc.id };
+  if (route.driver_id) {
+    const driver = await drivers.doc(route.driver_id).get();
+    if (driver.exists) {
+      const data = driver.data();
+      route.driver_name = data.name;
+      route.bus_no = route.bus_no || data.bus_no;
+    }
+  }
+  return route;
+};
+
+const getRoutes = async (snapshot) => Promise.all(snapshot.docs.map(toRoute));
 
 exports.getAll = async (req, res) => {
   try {
-    const { search } = req.query;
-    let query = `
-      SELECT r.*, d.name as driver_name, COALESCE(r.bus_no, d.bus_no) as bus_no
-      FROM route r
-      LEFT JOIN driver d ON r.driver_id = d.driver_id
-    `;
-    const params = [];
-
-    if (search) {
-      query += ' WHERE r.source LIKE ? OR r.destination LIKE ?';
-      params.push(`%${search}%`, `%${search}%`);
+    let result = await getRoutes(await routes.get());
+    if (req.query.search) {
+      const value = req.query.search.toLowerCase();
+      result = result.filter((route) =>
+        String(route.source || '').toLowerCase().includes(value) ||
+        String(route.destination || '').toLowerCase().includes(value)
+      );
     }
-
-    const [rows] = await pool.query(query, params);
-    res.json(rows);
+    res.json(result);
   } catch (error) {
     console.error('Get routes error:', error);
     res.status(500).json({ message: 'Server error' });
@@ -25,16 +37,9 @@ exports.getAll = async (req, res) => {
 
 exports.getById = async (req, res) => {
   try {
-    const [rows] = await pool.query(
-      `SELECT r.*, d.name as driver_name, COALESCE(r.bus_no, d.bus_no) as bus_no
-       FROM route r LEFT JOIN driver d ON r.driver_id = d.driver_id
-       WHERE r.route_id = ?`,
-      [req.params.id]
-    );
-    if (rows.length === 0) {
-      return res.status(404).json({ message: 'Route not found' });
-    }
-    res.json(rows[0]);
+    const doc = await routes.doc(req.params.id).get();
+    if (!doc.exists) return res.status(404).json({ message: 'Route not found' });
+    res.json(await toRoute(doc));
   } catch (error) {
     console.error('Get route error:', error);
     res.status(500).json({ message: 'Server error' });
@@ -43,21 +48,12 @@ exports.getById = async (req, res) => {
 
 exports.create = async (req, res) => {
   try {
-    const { driver_id, source, destination, fare, bus_no } = req.body;
+    const { source, destination, fare } = req.body;
     if (!source || !destination || !fare) {
       return res.status(400).json({ message: 'Source, destination, and fare are required' });
     }
-    const [result] = await pool.query(
-      'INSERT INTO route (driver_id, source, destination, fare, bus_no) VALUES (?, ?, ?, ?, ?)',
-      [driver_id || null, source, destination, fare, bus_no || null]
-    );
-    const [newRoute] = await pool.query(
-      `SELECT r.*, d.name as driver_name, COALESCE(r.bus_no, d.bus_no) as bus_no
-       FROM route r LEFT JOIN driver d ON r.driver_id = d.driver_id
-       WHERE r.route_id = ?`,
-      [result.insertId]
-    );
-    res.status(201).json(newRoute[0]);
+    const ref = await routes.add(req.body);
+    res.status(201).json(await toRoute(await ref.get()));
   } catch (error) {
     console.error('Create route error:', error);
     res.status(500).json({ message: 'Server error' });
@@ -66,22 +62,10 @@ exports.create = async (req, res) => {
 
 exports.update = async (req, res) => {
   try {
-    const { driver_id, source, destination, fare, bus_no } = req.body;
-    const [existing] = await pool.query('SELECT * FROM route WHERE route_id = ?', [req.params.id]);
-    if (existing.length === 0) {
-      return res.status(404).json({ message: 'Route not found' });
-    }
-    await pool.query(
-      'UPDATE route SET driver_id = ?, source = ?, destination = ?, fare = ?, bus_no = ? WHERE route_id = ?',
-      [driver_id || null, source, destination, fare, bus_no || null, req.params.id]
-    );
-    const [updated] = await pool.query(
-      `SELECT r.*, d.name as driver_name, COALESCE(r.bus_no, d.bus_no) as bus_no
-       FROM route r LEFT JOIN driver d ON r.driver_id = d.driver_id
-       WHERE r.route_id = ?`,
-      [req.params.id]
-    );
-    res.json(updated[0]);
+    const ref = routes.doc(req.params.id);
+    if (!(await ref.get()).exists) return res.status(404).json({ message: 'Route not found' });
+    await ref.update(req.body);
+    res.json(await toRoute(await ref.get()));
   } catch (error) {
     console.error('Update route error:', error);
     res.status(500).json({ message: 'Server error' });
@@ -90,11 +74,9 @@ exports.update = async (req, res) => {
 
 exports.remove = async (req, res) => {
   try {
-    const [existing] = await pool.query('SELECT * FROM route WHERE route_id = ?', [req.params.id]);
-    if (existing.length === 0) {
-      return res.status(404).json({ message: 'Route not found' });
-    }
-    await pool.query('DELETE FROM route WHERE route_id = ?', [req.params.id]);
+    const ref = routes.doc(req.params.id);
+    if (!(await ref.get()).exists) return res.status(404).json({ message: 'Route not found' });
+    await ref.delete();
     res.json({ message: 'Route deleted successfully' });
   } catch (error) {
     console.error('Delete route error:', error);
